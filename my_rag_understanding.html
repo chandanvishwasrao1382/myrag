@@ -1,0 +1,1719 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>RAG Simulator</title>
+
+<style>
+/* =========================================================
+   RAG SIMULATOR
+   Ferrari-inspired visual design
+   No external libraries
+========================================================= */
+
+:root {
+    --red: #ff1025;
+    --red-dark: #9d0010;
+    --red-soft: #ff3345;
+    --black: #050607;
+    --black-2: #0a0d10;
+    --panel: #0c1115;
+    --panel-2: #11171c;
+    --border: #2b343c;
+    --text: #f4f4f4;
+    --muted: #9ba3aa;
+    --green: #55e36c;
+    --yellow: #ffd84a;
+    --blue: #4dc7ff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background:
+        radial-gradient(circle at 80% 0%, rgba(255,0,30,.13), transparent 30%),
+        linear-gradient(135deg, #030405, #080b0e 55%, #030405);
+    color: var(--text);
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+header {
+    min-height: 250px;
+    padding: 35px 6%;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid #252b30;
+    background:
+        linear-gradient(110deg,
+            #050607 0%,
+            #080a0d 55%,
+            #160207 100%);
+}
+
+header:after {
+    content: "";
+    position: absolute;
+    width: 55%;
+    height: 2px;
+    right: -5%;
+    bottom: 55px;
+    background: linear-gradient(90deg, transparent, var(--red));
+    transform: skewX(-30deg);
+}
+
+.brand {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo {
+    width: 65px;
+    height: 65px;
+    border: 2px solid var(--red);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 27px;
+    font-weight: 900;
+    color: white;
+    background:
+        linear-gradient(145deg, #191919, #080808);
+    box-shadow:
+        0 0 25px rgba(255,16,37,.25);
+}
+
+.brand-title {
+    font-size: clamp(32px, 5vw, 62px);
+    font-weight: 900;
+    letter-spacing: -3px;
+    text-transform: uppercase;
+}
+
+.brand-title span {
+    color: var(--red);
+    font-style: italic;
+}
+
+.subtitle {
+    margin: 10px 0 0 85px;
+    color: var(--muted);
+    font-size: 18px;
+    letter-spacing: .5px;
+}
+
+.hero-line {
+    margin: 35px 0 0 85px;
+    font-size: 14px;
+    color: #d5d8db;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.hero-line b {
+    color: var(--red);
+}
+
+/* =========================================================
+   PIPELINE
+========================================================= */
+
+.pipeline {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+
+    background: rgba(5,7,9,.95);
+    backdrop-filter: blur(15px);
+
+    border-bottom: 1px solid #252b30;
+}
+
+.pipeline-step {
+    padding: 16px 8px;
+    text-align: center;
+    color: #737b82;
+    border-right: 1px solid #1c2227;
+    cursor: pointer;
+    transition: .25s;
+    font-size: 12px;
+}
+
+.pipeline-step:hover {
+    color: white;
+}
+
+.pipeline-step.active {
+    color: white;
+    background:
+        linear-gradient(180deg,
+            rgba(255,16,37,.18),
+            transparent);
+    box-shadow:
+        inset 0 -3px var(--red);
+}
+
+.pipeline-number {
+    width: 30px;
+    height: 30px;
+    margin: auto auto 7px;
+    border-radius: 50%;
+    border: 1px solid #45505a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+}
+
+.pipeline-step.active .pipeline-number {
+    background: var(--red);
+    border-color: var(--red);
+    box-shadow: 0 0 18px rgba(255,16,37,.5);
+}
+
+/* =========================================================
+   LAYOUT
+========================================================= */
+
+.container {
+    max-width: 1500px;
+    margin: auto;
+    padding: 35px 28px 80px;
+}
+
+.intro {
+    max-width: 900px;
+    margin: 0 auto 35px;
+    text-align: center;
+}
+
+.intro h1 {
+    font-size: 34px;
+    margin-bottom: 12px;
+}
+
+.intro p {
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+/* =========================================================
+   CARDS
+========================================================= */
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+
+.card {
+    background:
+        linear-gradient(145deg,
+            rgba(17,23,28,.98),
+            rgba(7,10,12,.98));
+
+    border: 1px solid var(--border);
+    border-radius: 18px;
+
+    padding: 22px;
+
+    min-height: 470px;
+
+    position: relative;
+    overflow: hidden;
+
+    transition:
+        transform .3s,
+        border-color .3s,
+        box-shadow .3s;
+}
+
+.card:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--red),
+        transparent
+    );
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    border-color: #5b2027;
+    box-shadow:
+        0 15px 45px rgba(0,0,0,.35);
+}
+
+.step-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.step-number {
+    width: 38px;
+    height: 38px;
+    background: var(--red);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    box-shadow:
+        0 0 20px rgba(255,16,37,.25);
+}
+
+.card h2 {
+    margin: 0;
+    font-size: 21px;
+}
+
+.card h3 {
+    font-size: 14px;
+    margin: 20px 0 10px;
+}
+
+.description {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   DATA COMPONENTS
+========================================================= */
+
+.document-box,
+.chunk-box,
+.vector-box,
+.db-box,
+.query-box,
+.context-box,
+.answer-box {
+    background: #080d11;
+    border: 1px solid #273139;
+    border-radius: 11px;
+    padding: 13px;
+    margin-top: 12px;
+}
+
+.document-box {
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.document-title {
+    color: white;
+    font-weight: 800;
+    margin-bottom: 7px;
+}
+
+.chunk-box {
+    border-left: 3px solid var(--red);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.chunk-id {
+    color: var(--red);
+    font-weight: 800;
+    font-size: 11px;
+    margin-bottom: 5px;
+}
+
+.vector {
+    font-family: "Courier New", monospace;
+    color: var(--blue);
+    font-size: 11px;
+    line-height: 1.6;
+    word-break: break-all;
+}
+
+.db-row {
+    display: grid;
+    grid-template-columns: 35px 1fr;
+    gap: 8px;
+    padding: 9px 0;
+    border-bottom: 1px solid #20282e;
+    font-size: 11px;
+}
+
+.db-row:last-child {
+    border-bottom: 0;
+}
+
+.db-id {
+    color: var(--red);
+    font-weight: 900;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+button {
+    width: 100%;
+    border: 0;
+    border-radius: 9px;
+    padding: 12px 15px;
+    margin-top: 18px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #d90018,
+            #ff152b
+        );
+
+    color: white;
+    font-weight: 800;
+    cursor: pointer;
+
+    text-transform: uppercase;
+    letter-spacing: .6px;
+
+    transition: .2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 25px rgba(255,16,37,.25);
+}
+
+button:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* =========================================================
+   QUERY
+========================================================= */
+
+textarea,
+input {
+    width: 100%;
+    background: #05080a;
+    color: white;
+    border: 1px solid #303a42;
+    border-radius: 9px;
+    padding: 12px;
+    font-family: inherit;
+    outline: none;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 95px;
+}
+
+textarea:focus,
+input:focus {
+    border-color: var(--red);
+}
+
+/* =========================================================
+   SCORE
+========================================================= */
+
+.score-row {
+    margin: 13px 0;
+}
+
+.score-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 5px;
+}
+
+.score-value {
+    color: var(--green);
+    font-weight: 900;
+}
+
+.progress {
+    height: 6px;
+    border-radius: 5px;
+    background: #20262b;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        var(--red),
+        #ff8a92
+    );
+    width: 0;
+    transition: width 1s;
+}
+
+/* =========================================================
+   TOP-K
+========================================================= */
+
+.retrieved {
+    border: 1px solid var(--green);
+    box-shadow:
+        inset 0 0 15px rgba(85,227,108,.04);
+}
+
+.retrieved .chunk-id {
+    color: var(--green);
+}
+
+/* =========================================================
+   ANSWER
+========================================================= */
+
+.answer-box {
+    border-color: var(--red);
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(255,16,37,.12),
+            transparent 50%
+        ),
+        #080b0e;
+}
+
+.answer {
+    line-height: 1.65;
+    font-size: 13px;
+}
+
+.answer strong {
+    color: white;
+}
+
+.source {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #2a3136;
+    color: #aab1b7;
+    font-size: 11px;
+}
+
+/* =========================================================
+   FULL EXPLANATION
+========================================================= */
+
+.learning-section {
+    margin-top: 35px;
+    background: #080c0f;
+    border: 1px solid #252d33;
+    border-radius: 20px;
+    padding: 30px;
+}
+
+.learning-section h2 {
+    text-align: center;
+}
+
+.mind-model {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.mind-item {
+    padding: 18px;
+    border-radius: 12px;
+    background: #0e1418;
+    border: 1px solid #273038;
+}
+
+.mind-item b {
+    color: var(--red);
+    display: block;
+    margin-bottom: 8px;
+}
+
+.mind-item span {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   RESET
+========================================================= */
+
+.reset-area {
+    text-align: center;
+    margin-top: 35px;
+}
+
+.reset-btn {
+    width: auto;
+    padding: 13px 35px;
+    background: transparent;
+    border: 1px solid #4a535b;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:1100px) {
+
+    .card-grid {
+        grid-template-columns: repeat(2,1fr);
+    }
+
+    .pipeline {
+        grid-template-columns: repeat(4,1fr);
+    }
+
+    .mind-model {
+        grid-template-columns: repeat(2,1fr);
+    }
+}
+
+@media(max-width:650px) {
+
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pipeline {
+        grid-template-columns: repeat(2,1fr);
+    }
+
+    .brand-title {
+        font-size: 34px;
+    }
+
+    .subtitle,
+    .hero-line {
+        margin-left: 0;
+    }
+
+    .mind-model {
+        grid-template-columns: 1fr;
+    }
+
+    .container {
+        padding: 20px 14px 50px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- =======================================================
+     HEADER
+======================================================= -->
+
+<header>
+
+    <div class="brand">
+
+        <div class="logo">R</div>
+
+        <div class="brand-title">
+            RAG <span>SIMULATOR</span>
+        </div>
+
+    </div>
+
+    <div class="subtitle">
+        Retrieval Augmented Generation
+    </div>
+
+    <div class="hero-line">
+        FROM KNOWLEDGE <b>→</b>
+        TO CONTEXT <b>→</b>
+        TO BETTER ANSWERS
+    </div>
+
+</header>
+
+
+<!-- =======================================================
+     PIPELINE
+======================================================= -->
+
+<nav class="pipeline">
+
+    <div class="pipeline-step active" onclick="goTo(1)">
+        <div class="pipeline-number">1</div>
+        Documents
+    </div>
+
+    <div class="pipeline-step" onclick="goTo(2)">
+        <div class="pipeline-number">2</div>
+        Chunking
+    </div>
+
+    <div class="pipeline-step" onclick="goTo(3)">
+        <div class="pipeline-number">3</div>
+        Embedding
+    </div>
+
+    <div class="pipeline-step" onclick="goTo(4)">
+        <div class="pipeline-number">4</div>
+        Vector DB
+    </div>
+
+    <div class="pipeline-step" onclick="goTo(5)">
+        <div class="pipeline-number">5</div>
+        Query
+    </div>
+
+    <div class="pipeline-step" onclick="goTo(6)">
+        <div class="pipeline-number">6</div>
+        Retrieval
+    </div>
+
+    <div class="pipeline-step" onclick="goTo(7)">
+        <div class="pipeline-number">7</div>
+        Context
+    </div>
+
+    <div class="pipeline-step" onclick="goTo(8)">
+        <div class="pipeline-number">8</div>
+        LLM
+    </div>
+
+</nav>
+
+
+<main class="container">
+
+<div class="intro">
+
+    <h1>Understand RAG by Running It</h1>
+
+    <p>
+        This simulator demonstrates the complete RAG pipeline.
+        Follow each stage and observe what information moves
+        from one component to the next.
+    </p>
+
+</div>
+
+
+<!-- =======================================================
+     CARDS
+======================================================= -->
+
+<div class="card-grid">
+
+
+<!-- =======================================================
+     STEP 1
+======================================================= -->
+
+<section class="card" id="step1">
+
+    <div class="step-label">
+        <div class="step-number">1</div>
+
+        <div>
+            <h2>Knowledge Base</h2>
+            <div class="description">
+                External knowledge
+            </div>
+        </div>
+    </div>
+
+    <p class="description">
+
+        RAG starts with external information such as
+        PDFs, policies, websites, manuals or documents.
+
+        <br><br>
+
+        <b>Important:</b> The knowledge base itself is
+        not RAG. It is the source from which RAG retrieves
+        information.
+
+    </p>
+
+    <div class="document-box">
+
+        <div class="document-title">
+            UGRO Home Loan Policy
+        </div>
+
+        Eligible applicants must be between 21 and
+        65 years old.
+
+        <br><br>
+
+        Salaried applicants must provide salary slips
+        and bank statements.
+
+        <br><br>
+
+        Applicants must provide valid identity documents.
+
+        <br><br>
+
+        Property ownership documents are required.
+
+    </div>
+
+    <button onclick="activate(2)">
+        Next: Chunk Document →
+    </button>
+
+</section>
+
+
+<!-- =======================================================
+     STEP 2
+======================================================= -->
+
+<section class="card" id="step2">
+
+    <div class="step-label">
+        <div class="step-number">2</div>
+
+        <div>
+            <h2>Chunking</h2>
+            <div class="description">
+                Split information
+            </div>
+        </div>
+    </div>
+
+    <p class="description">
+
+        Large documents are divided into smaller
+        pieces called <b>chunks</b>.
+
+        <br><br>
+
+        Why?
+
+        <br>
+
+        Smaller pieces make retrieval more precise.
+
+    </p>
+
+    <div id="chunks">
+
+        <div class="chunk-box">
+
+            <div class="chunk-id">CHUNK 01</div>
+
+            Eligible applicants must be between
+            21 and 65 years old.
+
+        </div>
+
+        <div class="chunk-box">
+
+            <div class="chunk-id">CHUNK 02</div>
+
+            Salaried applicants must provide
+            salary slips and bank statements.
+
+        </div>
+
+        <div class="chunk-box">
+
+            <div class="chunk-id">CHUNK 03</div>
+
+            Applicants must provide valid identity
+            documents.
+
+        </div>
+
+        <div class="chunk-box">
+
+            <div class="chunk-id">CHUNK 04</div>
+
+            Property ownership documents are required.
+
+        </div>
+
+    </div>
+
+    <button onclick="activate(3)">
+        Next: Create Embeddings →
+    </button>
+
+</section>
+
+
+<!-- =======================================================
+     STEP 3
+======================================================= -->
+
+<section class="card" id="step3">
+
+    <div class="step-label">
+
+        <div class="step-number">3</div>
+
+        <div>
+            <h2>Embeddings</h2>
+
+            <div class="description">
+                Text → numbers
+            </div>
+        </div>
+
+    </div>
+
+    <p class="description">
+
+        Each chunk is converted into a numerical
+        representation called an <b>embedding</b>.
+
+        <br><br>
+
+        Real embedding models can have hundreds
+        or thousands of dimensions.
+
+        <br><br>
+
+        This simulator uses six dimensions
+        so you can see the concept.
+
+    </p>
+
+    <div class="vector-box">
+
+        <div class="chunk-id">
+            CHUNK 01 VECTOR
+        </div>
+
+        <div class="vector">
+            [0.05, 0.85, 0.30, 0.20, 0.10, 0.60]
+        </div>
+
+    </div>
+
+    <div class="vector-box">
+
+        <div class="chunk-id">
+            CHUNK 02 VECTOR
+        </div>
+
+        <div class="vector">
+            [0.80, 0.75, 0.40, 0.30, 0.20, 0.70]
+        </div>
+
+    </div>
+
+    <div class="vector-box">
+
+        <div class="chunk-id">
+            CHUNK 03 VECTOR
+        </div>
+
+        <div class="vector">
+            [0.40, 0.30, 0.20, 0.85, 0.60, 0.50]
+        </div>
+
+    </div>
+
+    <button onclick="activate(4)">
+        Next: Store in Vector DB →
+    </button>
+
+</section>
+
+
+<!-- =======================================================
+     STEP 4
+======================================================= -->
+
+<section class="card" id="step4">
+
+    <div class="step-label">
+
+        <div class="step-number">4</div>
+
+        <div>
+            <h2>Vector Database</h2>
+
+            <div class="description">
+                Searchable vectors
+            </div>
+
+        </div>
+
+    </div>
+
+    <p class="description">
+
+        The embeddings are stored in a vector database.
+
+        <br><br>
+
+        The purpose is to make semantic search
+        fast and efficient.
+
+    </p>
+
+    <div class="db-box">
+
+        <div class="db-row">
+            <div class="db-id">C1</div>
+            <div>Eligibility & identity documents</div>
+        </div>
+
+        <div class="db-row">
+            <div class="db-id">C2</div>
+            <div>Salary slips & bank statements</div>
+        </div>
+
+        <div class="db-row">
+            <div class="db-id">C3</div>
+            <div>Property ownership documents</div>
+        </div>
+
+        <div class="db-row">
+            <div class="db-id">C4</div>
+            <div>Credit assessment</div>
+        </div>
+
+    </div>
+
+    <h3>Key Point</h3>
+
+    <p class="description">
+
+        The vector database does not generate the answer.
+
+        <br><br>
+
+        It helps RAG <b>find the right information</b>.
+
+    </p>
+
+    <button onclick="activate(5)">
+        Next: User Query →
+    </button>
+
+</section>
+
+
+<!-- =======================================================
+     STEP 5
+======================================================= -->
+
+<section class="card" id="step5">
+
+    <div class="step-label">
+
+        <div class="step-number">5</div>
+
+        <div>
+            <h2>User Query</h2>
+
+            <div class="description">
+                Question → vector
+            </div>
+
+        </div>
+
+    </div>
+
+    <p class="description">
+
+        The user asks a question.
+
+        <br><br>
+
+        The query is also converted into an
+        embedding using an embedding model.
+
+    </p>
+
+    <div class="query-box">
+
+        <label style="font-size:11px;color:#999">
+            USER QUESTION
+        </label>
+
+        <textarea id="userQuery">What documents are required for a salaried applicant?</textarea>
+
+    </div>
+
+    <button onclick="createQueryVector()">
+        Convert Query → Embedding
+    </button>
+
+    <div id="queryVectorArea"></div>
+
+</section>
+
+
+<!-- =======================================================
+     STEP 6
+======================================================= -->
+
+<section class="card" id="step6">
+
+    <div class="step-label">
+
+        <div class="step-number">6</div>
+
+        <div>
+            <h2>Similarity Search</h2>
+
+            <div class="description">
+                Find relevant chunks
+            </div>
+
+        </div>
+
+    </div>
+
+    <p class="description">
+
+        Now the query vector is compared with
+        vectors stored in the vector database.
+
+        <br><br>
+
+        A similarity algorithm such as
+        <b>cosine similarity</b> calculates how
+        semantically close they are.
+
+    </p>
+
+    <div id="scores">
+
+        <div class="score-row">
+
+            <div class="score-header">
+                <span>Chunk 2 — Salary Documents</span>
+                <span class="score-value">92%</span>
+            </div>
+
+            <div class="progress">
+                <div class="progress-bar"
+                     style="width:92%">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="score-row">
+
+            <div class="score-header">
+                <span>Chunk 1 — Eligibility</span>
+                <span class="score-value">77%</span>
+            </div>
+
+            <div class="progress">
+                <div class="progress-bar"
+                     style="width:77%">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="score-row">
+
+            <div class="score-header">
+                <span>Chunk 3 — Property</span>
+                <span class="score-value">51%</span>
+            </div>
+
+            <div class="progress">
+                <div class="progress-bar"
+                     style="width:51%">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="score-row">
+
+            <div class="score-header">
+                <span>Chunk 4 — Credit</span>
+                <span class="score-value">34%</span>
+            </div>
+
+            <div class="progress">
+                <div class="progress-bar"
+                     style="width:34%">
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <button onclick="activate(7)">
+        Retrieve Top-K Chunks →
+    </button>
+
+</section>
+
+
+<!-- =======================================================
+     STEP 7
+======================================================= -->
+
+<section class="card" id="step7">
+
+    <div class="step-label">
+
+        <div class="step-number">7</div>
+
+        <div>
+            <h2>Context Augmentation</h2>
+
+            <div class="description">
+                Build LLM context
+            </div>
+
+        </div>
+
+    </div>
+
+    <p class="description">
+
+        The most relevant chunks are retrieved.
+
+        <br><br>
+
+        These chunks are combined with the user's
+        question to create the context sent to the LLM.
+
+    </p>
+
+    <div class="context-box">
+
+        <div class="chunk-id">
+            RETRIEVED TOP-K CONTEXT
+        </div>
+
+        <div class="chunk-box retrieved">
+
+            <b>Chunk 2</b>
+
+            <br><br>
+
+            Salaried applicants must provide
+            salary slips and bank statements.
+
+        </div>
+
+        <div class="chunk-box retrieved">
+
+            <b>Chunk 1</b>
+
+            <br><br>
+
+            Eligible applicants must be between
+            21 and 65 years old.
+
+        </div>
+
+    </div>
+
+    <h3>Prompt sent to LLM</h3>
+
+    <div class="context-box">
+
+        <b>SYSTEM</b>
+
+        <br>
+
+        Use the provided context to answer the question.
+
+        <br><br>
+
+        <b>CONTEXT</b>
+
+        <br>
+
+        Salaried applicants must provide salary slips
+        and bank statements.
+
+        <br><br>
+
+        <b>USER</b>
+
+        <br>
+
+        What documents are required for a salaried applicant?
+
+    </div>
+
+    <button onclick="activate(8)">
+        Send Context + Query → LLM
+    </button>
+
+</section>
+
+
+<!-- =======================================================
+     STEP 8
+======================================================= -->
+
+<section class="card" id="step8">
+
+    <div class="step-label">
+
+        <div class="step-number">8</div>
+
+        <div>
+            <h2>LLM Generation</h2>
+
+            <div class="description">
+                Context → Answer
+            </div>
+
+        </div>
+
+    </div>
+
+    <p class="description">
+
+        The LLM receives the user's question
+        together with the retrieved context.
+
+        <br><br>
+
+        It uses that context to generate a
+        grounded answer.
+
+    </p>
+
+    <div class="answer-box">
+
+        <div class="chunk-id">
+            FINAL ANSWER
+        </div>
+
+        <div class="answer">
+
+            For a salaried applicant, the required
+            documents include:
+
+            <br><br>
+
+            • <strong>Salary slips</strong>
+
+            <br>
+
+            • <strong>Bank statements</strong>
+
+            <br>
+
+            • <strong>Valid identity documents</strong>
+
+            <div class="source">
+
+                ✓ Answer generated using retrieved
+                knowledge-base context.
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <h3>Why is this RAG?</h3>
+
+    <p class="description">
+
+        The LLM does not need to have this specific
+        policy stored in its training data.
+
+        <br><br>
+
+        RAG retrieves the relevant policy information
+        and gives it to the LLM as context.
+
+    </p>
+
+    <button onclick="resetSimulator()">
+        ↻ Run RAG Again
+    </button>
+
+</section>
+
+</div>
+
+
+<!-- =======================================================
+     10/10 MENTAL MODEL
+======================================================= -->
+
+<section class="learning-section">
+
+    <h2>Your 10/10 RAG Mental Model</h2>
+
+    <div class="mind-model">
+
+        <div class="mind-item">
+
+            <b>1. KNOWLEDGE</b>
+
+            <span>
+                Documents, PDFs, URLs, manuals,
+                policies, FAQs etc.
+            </span>
+
+        </div>
+
+        <div class="mind-item">
+
+            <b>2. CHUNKING</b>
+
+            <span>
+                Break large documents into smaller
+                searchable pieces.
+            </span>
+
+        </div>
+
+        <div class="mind-item">
+
+            <b>3. EMBEDDING</b>
+
+            <span>
+                Convert each chunk into a numerical
+                representation of its meaning.
+            </span>
+
+        </div>
+
+        <div class="mind-item">
+
+            <b>4. VECTOR DB</b>
+
+            <span>
+                Store embeddings so semantic search
+                can find relevant information.
+            </span>
+
+        </div>
+
+        <div class="mind-item">
+
+            <b>5. QUERY EMBEDDING</b>
+
+            <span>
+                Convert the user's question into
+                a vector using the embedding model.
+            </span>
+
+        </div>
+
+        <div class="mind-item">
+
+            <b>6. RETRIEVAL</b>
+
+            <span>
+                Compare query vector against stored
+                vectors and retrieve Top-K chunks.
+            </span>
+
+        </div>
+
+        <div class="mind-item">
+
+            <b>7. AUGMENTATION</b>
+
+            <span>
+                Combine the user's question with
+                retrieved text as context.
+            </span>
+
+        </div>
+
+        <div class="mind-item">
+
+            <b>8. GENERATION</b>
+
+            <span>
+                LLM uses the retrieved context to
+                generate the final grounded answer.
+            </span>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =======================================================
+     CORE FORMULA
+======================================================= -->
+
+<section class="learning-section"
+         style="text-align:center">
+
+    <h2>The Most Important Formula</h2>
+
+    <p style="
+        font-size:20px;
+        line-height:2;
+        color:#ddd;
+    ">
+
+        <span style="color:#ff1025">
+            USER QUERY
+        </span>
+
+        →
+
+        <span style="color:#4dc7ff">
+            QUERY EMBEDDING
+        </span>
+
+        →
+
+        <span style="color:#55e36c">
+            RETRIEVE RELEVANT CHUNKS
+        </span>
+
+        →
+
+        <span style="color:#ffd84a">
+            QUERY + CONTEXT
+        </span>
+
+        →
+
+        <span style="color:#ff1025">
+            LLM
+        </span>
+
+        →
+
+        <b>ANSWER</b>
+
+    </p>
+
+    <p class="description">
+
+        <b>
+            Embeddings help retrieve the information.
+            The retrieved text is what provides context to the LLM.
+        </b>
+
+    </p>
+
+</section>
+
+</main>
+
+
+<script>
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let currentStep = 1;
+
+
+/* =========================================================
+   ACTIVATE STEP
+========================================================= */
+
+function activate(step) {
+
+    currentStep = step;
+
+    const steps =
+        document.querySelectorAll(".pipeline-step");
+
+    steps.forEach((item,index) => {
+
+        if(index + 1 <= step) {
+            item.classList.add("active");
+        } else {
+            item.classList.remove("active");
+        }
+
+    });
+
+    const target =
+        document.getElementById("step" + step);
+
+    if(target) {
+
+        target.scrollIntoView({
+            behavior:"smooth",
+            block:"center"
+        });
+
+    }
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+function goTo(step) {
+
+    activate(step);
+
+}
+
+
+/* =========================================================
+   QUERY EMBEDDING SIMULATION
+========================================================= */
+
+function createQueryVector() {
+
+    const query =
+        document.getElementById("userQuery").value;
+
+    const vector =
+        generateQueryVector(query);
+
+    document.getElementById(
+        "queryVectorArea"
+    ).innerHTML = `
+
+        <div class="vector-box"
+             style="margin-top:15px">
+
+            <div class="chunk-id">
+                QUERY EMBEDDING
+            </div>
+
+            <div class="vector">
+                [${vector.join(", ")}]
+            </div>
+
+        </div>
+
+        <p class="description"
+           style="margin-top:12px">
+
+           The query is now represented as a vector.
+           The system can compare this vector with
+           vectors stored in the vector database.
+
+        </p>
+    `;
+
+    activate(6);
+
+}
+
+
+/* =========================================================
+   SIMPLIFIED EMBEDDING MODEL
+========================================================= */
+
+function generateQueryVector(text) {
+
+    text =
+        text.toLowerCase();
+
+    let vector = [
+        .8,
+        .7,
+        .3,
+        .2,
+        .1,
+        .6
+    ];
+
+    if(text.includes("salary")) {
+        vector[0] = .92;
+        vector[1] = .88;
+    }
+
+    if(text.includes("property")) {
+        vector[2] = .9;
+    }
+
+    if(text.includes("credit")) {
+        vector[3] = .85;
+    }
+
+    if(text.includes("document")) {
+        vector[4] = .8;
+    }
+
+    return vector.map(
+        x => x.toFixed(2)
+    );
+
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function resetSimulator() {
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+    document.getElementById(
+        "userQuery"
+    ).value =
+        "What documents are required for a salaried applicant?";
+
+    activate(1);
+
+}
+
+
+/* =========================================================
+   INITIAL STATE
+========================================================= */
+
+activate(1);
+
+</script>
+
+</body>
+</html>
+```
